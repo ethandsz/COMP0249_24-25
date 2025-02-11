@@ -60,10 +60,25 @@ classdef PlatformPredictionEdge < g2o.core.BaseBinaryEdge
             %   an estimate of the platform at time x_(k) and the control
             %   input u_(k+1)
 
-            warning('PlatformPredictionEdge.initialEstimate: implement')
+           % warning('PlatformPredictionEdge.initialEstimate: implement')
+           %   M = [cos(theta) -sin(theta) 0; sin(theta) cos(theta) 0;0 0 1];
+            %
+            % The new state is predicted from 
+            %
+            %   x_(k+1) = x_(k) + M * [vx;vy;theta]
 
+            x_k = obj.edgeVertices{1}.estimate();
+            theta = x_k(3);
+            M = [cos(theta) -sin(theta) 0; 
+                sin(theta) cos(theta) 0;
+                0 0 1];
+            
+            x_k1 = x_k + M * (obj.z * obj.dT);
             % Compute the posterior assming no noise
-            obj.edgeVertices{2}.x = zeros(3, 1);
+            x_k1(3) = x_k(3) + obj.z(3) * obj.dT;
+            x_k1(3) = g2o.stuff.normalize_theta(x_k1(3));
+            obj.edgeVertices{2}.setEstimate(x_k1);
+           % fprintf("Next State Estimate:\nx: %.2f\ny: %.2f\ntheta: %.2f\n\n\n", x_k1(1), x_k1(2), x_k1(3));
         end
         
         function computeError(obj)
@@ -79,9 +94,19 @@ classdef PlatformPredictionEdge < g2o.core.BaseBinaryEdge
             %   equation has to be rearranged to make the error the subject
             %   of the formulat
                        
-            warning('PlatformPredictionEdge.computeError: implement')
+            % e(x,z) = inv(M) * (x_(k+1) - x_(k))
+            x_k = obj.edgeVertices{1}.estimate();
+            x_k1 = obj.edgeVertices{2}.estimate();
+            theta = x_k(3);
+            M = [cos(theta) -sin(theta) 0; 
+                sin(theta) cos(theta) 0;
+                0 0 1];
+            Mi = inv(M);
+            dx = x_k1 - x_k;
 
-            obj.errorZ = 0;
+
+            obj.errorZ = Mi\dx - (obj.z * obj.dT);
+            obj.errorZ(3) = g2o.stuff.normalize_theta(obj.errorZ(3));
         end
         
         % Compute the Jacobians
@@ -96,12 +121,28 @@ classdef PlatformPredictionEdge < g2o.core.BaseBinaryEdge
             %   vertices which contribute to the edge, the Jacobians with
             %   respect to both of them must be computed.
             %
+            x_k = obj.edgeVertices{1}.estimate();
+            x_k1 = obj.edgeVertices{2}.estimate();
+            dx = x_k1 - x_k;
+            theta = x_k(3);
+            c = cos(theta);
+            s = sin(theta);
 
-            warning('PlatformPredictionEdge.linearizeOplus: implement')
+            M = [cos(theta) -sin(theta) 0; 
+                sin(theta) cos(theta) 0;
+                0 0 1];
+            Mi = inv(M);
+            obj.J{2} = Mi;
+            %warning('PlatformPredictionEdge.linearizeOplus: implement')
+            obj.J{1}(1, 1) = - c;
+            obj.J{1}(1, 2) = - s;
+            obj.J{1}(1, 3) = -dx(1) * s + dx(2) * c;
+            obj.J{1}(2, 1) = s;
+            obj.J{1}(2, 2) = - c;
+            obj.J{1}(2, 3) = -dx(1) * c - dx(2) * s;
+            obj.J{1}(3, 3) = -1;
+           % obj.J{1} = -eye(3);
 
-            obj.J{1} = -eye(3);
-
-            obj.J{2} = eye(3);
         end
     end    
 end

@@ -27,7 +27,7 @@ mainLoop.setAccumulateResultsUpdatePeriod(50);
 fig = FigureManager.getFigure("Q1b");
 clf
 hold on
-axis([-25 25 -25 25])
+axis([-50 50 -50 50])
 axis square
 
 % Set up the views which show the output of the simulator
