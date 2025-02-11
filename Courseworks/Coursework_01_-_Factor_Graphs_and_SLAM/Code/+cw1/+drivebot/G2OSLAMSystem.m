@@ -14,7 +14,7 @@ classdef G2OSLAMSystem < cw1.drivebot.SLAMSystemBase
         NL = 2;
         
         % Initial cache size; might help a bit with performance
-        INITIAL_CACHE_SIZE = 10000;
+        INITIAL_CACHE_SIZE = 100000;
     end
 
     properties(Access = public)
