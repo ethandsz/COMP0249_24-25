@@ -31,16 +31,15 @@ classdef LandmarkRangeBearingEdge < g2o.core.BaseBinaryEdge
             landmarkPos = obj.edgeVertices{2}.estimate();
             dx = landmarkPos(1) - platformState(1);
             dy = landmarkPos(2) - platformState(2);
-            r = norm([dx dy]);
+            r = sqrt(dx^2 + dy^2);
             
             % Jacobian w.r.t. platform (vertex 1)
             dR_dx = -dx / r;
             dR_dy = -dy / r;
-            dR_dtheta = 0;
             dB_dx = dy / r^2;
             dB_dy = -dx / r^2;
             dB_dtheta = -1;
-            obj.J{1} = -[dR_dx, dR_dy, dR_dtheta;
+            obj.J{1} = -[dR_dx, dR_dy, 0;
                          dB_dx, dB_dy, dB_dtheta];
             
             % Jacobian w.r.t. landmark (vertex 2)

@@ -146,12 +146,12 @@ classdef PlatformPredictionEdge < g2o.core.BaseBinaryEdge
         %    % obj.J{1} = -eye(3);
     % end
         function computeError(obj)
-            priorX = obj.edgeVertices{1}.estimate();
+            priorX = obj.edgeVertices{1}.estimate(); %Check this state! Why is it so different than edgeVertices{2}???
             currentX = obj.edgeVertices{2}.estimate();
             c = cos(priorX(3));
             s = sin(priorX(3));
             Mi = [c s 0; -s c 0; 0 0 1];
-            dx = currentX - priorX;
+            dx = (currentX - priorX);
             % Error = measurement (0) - predicted motion
             obj.errorZ = Mi * dx - (obj.z * obj.dT); % z is velocity scaled by dT
             obj.errorZ(3) = g2o.stuff.normalize_theta(obj.errorZ(3));
@@ -160,8 +160,8 @@ classdef PlatformPredictionEdge < g2o.core.BaseBinaryEdge
         function linearizeOplus(obj)
             priorX = obj.edgeVertices{1}.estimate();
             currentX = obj.edgeVertices{2}.estimate();
-            dx = currentX - priorX;
-            c = cos(priorX(3));
+            dx = obj.dT * (currentX - priorX);
+            c = cos(priorX(3)) ;
             s = sin(priorX(3));
             Mi = [c s 0; -s c 0; 0 0 1];
             
