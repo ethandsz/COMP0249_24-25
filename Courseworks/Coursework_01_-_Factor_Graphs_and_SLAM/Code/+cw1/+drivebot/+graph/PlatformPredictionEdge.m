@@ -50,58 +50,69 @@ classdef PlatformPredictionEdge < g2o.core.BaseBinaryEdge
         end
        
         function initialEstimate(obj)
-            % INITIALESTIMATE Compute the initial estimate of a platform.
-            %
-            % Syntax:
-            %   obj.initialEstimate();
-            %
-            % Description:
-            %   Compute the initial estimate of the platform x_(k+1) given
-            %   an estimate of the platform at time x_(k) and the control
-            %   input u_(k+1)
 
-            warning('PlatformPredictionEdge.initialEstimate: implement')
-
-            % Compute the posterior assming no noise
-            obj.edgeVertices{2}.x = zeros(3, 1);
+            xk = obj.edgeVertices{1}.x;       % Get x_k from Vertex 1
+        
+            theta_k = xk(3);                  % Extract orientation θ_k
+        
+            % Construct rotation matrix M (Equation 4 in Appendix A)
+        
+            M = obj.dT * [cos(theta_k), -sin(theta_k), 0;
+        
+                         sin(theta_k),  cos(theta_k), 0;
+        
+                         0, 0, 1];
+        
+            % Compute x_{k+1} = x_k + M * z (z is control input u)
+        
+            xkp1 = xk + M * obj.z;            % Predict x_{k+1}
+        
+            % Wrap θ_{k+1} to [-pi, pi]
+        
+            xkp1(3) = g2o.stuff.normalize_theta(xkp1(3));
+        
+            % Set Vertex 2's state
+        
+            obj.edgeVertices{2}.x = xkp1;
+        
         end
+         
         
         function computeError(obj)
-            % COMPUTEERROR Compute the error for the edge.
-            %
-            % Syntax:
-            %   obj.computeError();
-            %
-            % Description:
-            %   Compute the value of the error, which is the difference
-            %   between the measurement and the parameter state in the
-            %   vertex. Note the error enters in a nonlinear manner, so the
-            %   equation has to be rearranged to make the error the subject
-            %   of the formulat
-                       
-            warning('PlatformPredictionEdge.computeError: implement')
-
-            obj.errorZ = 0;
+            xk = obj.edgeVertices{1}.x;       % Current state x_k
+            xkp1 = obj.edgeVertices{2}.x;     % Next state x_{k+1}
+            theta_k = xk(3);                  % Extract θ_k
+            % Construct rotation matrix M
+            M = obj.dT * [cos(theta_k), -sin(theta_k), 0;
+                         sin(theta_k),  cos(theta_k), 0;
+                         0, 0, 1];
+            invM = inv(M);                    % Compute M^{-1}
+            delta_x = xkp1 - xk;              % Δx = x_{k+1} - x_k
+            % Wrap the orientation difference
+            delta_x(3) = g2o.stuff.normalize_theta(delta_x(3));
+            % Error = M^{-1} * Δx - z (z is control input u)
+            obj.errorZ = invM * delta_x - obj.z;
         end
         
-        % Compute the Jacobians
-        function linearizeOplus(obj)
-            % LINEARIZEOPLUS Compute the Jacobians for the edge.
-            %
-            % Syntax:
-            %   obj.computeError();
-            %
-            % Description:
-            %   Compute the Jacobians for the edge. Since we have two
-            %   vertices which contribute to the edge, the Jacobians with
-            %   respect to both of them must be computed.
-            %
-
-            warning('PlatformPredictionEdge.linearizeOplus: implement')
-
-            obj.J{1} = -eye(3);
-
-            obj.J{2} = eye(3);
+                % Compute the Jacobians
+         function linearizeOplus(obj)
+            % Get the current state
+            xk = obj.edgeVertices{1}.x;
+            xk1 = obj.edgeVertices{2}.x;
+            theta = xk(3);
+            % Compute the rotation matrix M
+            M = obj.dT * [cos(theta) -sin(theta) 0;
+                          sin(theta) cos(theta) 0;
+                          0 0 1];
+            % The Jacobian with respect to xk
+            dtheta = xk1 - xk;
+            J1 = -(M' / obj.dT);
+            % The Jacobian with respect to xk1
+            J2 = M' / obj.dT;
+            % Store the Jacobians
+            obj.J{1} = J1;
+            obj.J{2} = J2;
         end
+
     end    
 end
