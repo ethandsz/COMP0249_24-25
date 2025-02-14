@@ -157,6 +157,7 @@ classdef PlatformPredictionEdge < g2o.core.BaseBinaryEdge
             % Error = measurement (0) - predicted motion
             obj.errorZ = Mi * dx - (obj.z * obj.dT); % z is velocity scaled by dT
             obj.errorZ(3) = g2o.stuff.normalize_theta(obj.errorZ(3));
+            obj.errorZ = obj.errorZ/2;
             obj.setMeasurement(obj.z);
 
           % obj.setMeasurement([obj.z(1); obj.z(2); g2o.stuff.normalize_theta(obj.z(3)) ]);

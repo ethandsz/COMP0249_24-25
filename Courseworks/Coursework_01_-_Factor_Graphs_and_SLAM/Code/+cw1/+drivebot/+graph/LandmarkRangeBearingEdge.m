@@ -339,10 +339,25 @@ classdef LandmarkRangeBearingEdge < g2o.core.BaseBinaryEdge
             %   between the predicted and actual range-bearing measurement.
 
            % warning('LandmarkRangeBearingEdge.computeError: implement')
-            error = obj.z - obj.edgeVertices{2}.estimate();
-            estimate = obj.edgeVertices{2}.estimate();
-            error(2) = g2o.stuff.normalize_theta(obj.z(2) - estimate(2));
-            obj.errorZ = error/2;
+
+
+            x = obj.edgeVertices{1}.estimate();
+            landmark = obj.edgeVertices{2}.estimate();
+            dx = landmark(1:2) - x(1:2);
+     
+            obj.errorZ(1) = (norm(dx) - obj.z(1));
+            obj.errorZ(2) = g2o.stuff.normalize_theta(atan2(dx(2), dx(1)) - x(3) - obj.z(2));
+
+           %  estimate = obj.edgeVertices{2}.estimate();
+           %  errorRange = obj.z(1) - estimate(1);
+           % 
+           %  obj.errorZ(1) = norm(dx) - obj.z(1);
+           %  obj.errorZ(2) = g2o.stuff.normalize_theta(atan2(dx(2), dx(1)) - x(3) - obj.z(2));
+           % 
+           % % obj.errorZ(2) = g2o.stuff.normalize_theta(atan2(dx(2), dx(1)) - x(3) - obj.z(2));
+           % 
+           %  error(2) = g2o.stuff.normalize_theta(obj.z(2) - estimate(2));
+            obj.errorZ = obj.errorZ/2;
             obj.setMeasurement(obj.z);
         end
         
@@ -404,12 +419,12 @@ classdef LandmarkRangeBearingEdge < g2o.core.BaseBinaryEdge
             x = obj.edgeVertices{1}.estimate();
             dx = 0.5 * (obj.edgeVertices{2}.estimate() - x(1:2));
             r = norm(dx);
-            % 
-            % obj.J{1} = ...
-            %     [-dx(1)/r -dx(2)/r 0;
-            %     dx(2)/r^2 -dx(1)/r^2 -1];
-            % obj.J{2} = [ dx(1)/r,   dx(2)/r;
-            %             -dx(2)/r^2, dx(1)/r^2 ];
+
+            obj.J{1} = ...
+                -[-dx(1)/r -dx(2)/r 0;
+                dx(2)/r^2 -dx(1)/r^2 -1];
+            obj.J{2} = -[ dx(1)/r,   dx(2)/r;
+                        -dx(2)/r^2, dx(1)/r^2 ];
 
         end        
     end

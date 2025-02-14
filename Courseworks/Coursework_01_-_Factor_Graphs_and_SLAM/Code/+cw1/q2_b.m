@@ -1,5 +1,4 @@
 % Run q2b
-
 import ebe.core.*;
 import ebe.graphics.*;
 import cw1.*;
