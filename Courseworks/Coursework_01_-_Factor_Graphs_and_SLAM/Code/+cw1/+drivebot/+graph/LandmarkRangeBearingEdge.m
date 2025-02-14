@@ -404,10 +404,10 @@ classdef LandmarkRangeBearingEdge < g2o.core.BaseBinaryEdge
             x = obj.edgeVertices{1}.estimate();
             dx = 0.5 * (obj.edgeVertices{2}.estimate() - x(1:2));
             r = norm(dx);
-            
-            obj.J{1} = ...
-                [-dx(1)/r -dx(2)/r 0;
-                dx(2)/r^2 -dx(1)/r^2 -1];
+            % 
+            % obj.J{1} = ...
+            %     [-dx(1)/r -dx(2)/r 0;
+            %     dx(2)/r^2 -dx(1)/r^2 -1];
             % obj.J{2} = [ dx(1)/r,   dx(2)/r;
             %             -dx(2)/r^2, dx(1)/r^2 ];
 
