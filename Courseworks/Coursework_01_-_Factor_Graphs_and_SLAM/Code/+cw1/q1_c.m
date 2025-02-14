@@ -18,6 +18,11 @@ mainLoop.setEventGenerator(simulator);
 g2oSLAMSystem = drivebot.G2OSLAMSystem(config);
 mainLoop.addEstimator(g2oSLAMSystem);
 
+% Create the SLAM system and register it
+ekfSLAMSystem = drivebot.EKFSLAMSystem(config);
+mainLoop.addEstimator(ekfSLAMSystem);
+
+
 % Create the store for estimates
 resultsAccumulator = ebe.slam.XPPlatformAccumulator();
 mainLoop.addResultsAccumulator(resultsAccumulator);
@@ -35,6 +40,9 @@ simulatorViewer = ebe.graphics.ViewManager(config);
 simulatorView = drivebot.SimulatorView(config, simulator);
 simulatorView.setCentreAxesOnTruth(true);
 simulatorViewer.addView(simulatorView);
+
+simulatorViewer.addView(drivebot.SLAMSystemView(config, ekfSLAMSystem));
+
 simulatorViewer.addView(drivebot.SLAMSystemView(config, g2oSLAMSystem));
 
 % Register the viewer with the mainloop

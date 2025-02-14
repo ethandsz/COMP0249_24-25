@@ -65,8 +65,11 @@ classdef PlatformPredictionEdge < g2o.core.BaseBinaryEdge
         
             % Compute x_{k+1} = x_k + M * z (z is control input u)
         
-            xkp1 = xk + M * obj.z;            % Predict x_{k+1}
-        
+            xkp1 = xk + M * obj.z; % Predict x_{k+1}
+
+            % Q_k = diag([0.1, 0.1, 0.01]);
+            % v_k = mvnrnd([0; 0; 0], Q_k);
+            % xkp1 = xkp1 + v_k;
             % Wrap θ_{k+1} to [-pi, pi]
         
             xkp1(3) = g2o.stuff.normalize_theta(xkp1(3));
@@ -79,6 +82,22 @@ classdef PlatformPredictionEdge < g2o.core.BaseBinaryEdge
          
         
         function computeError(obj)
+            % e(x,z) = inv(M) * (x_(k+1) - x_(k))
+            % 
+            % xk = obj.edgeVertices{1}.x;       % Current state x_k
+            % xkp1 = obj.edgeVertices{2}.x;     % Next state x_{k+1}
+            % theta_k = xk(3);                  % Extract θ_k
+            % % Construct rotation matrix M
+            % M = obj.dT * [cos(theta_k), -sin(theta_k), 0;
+            %              sin(theta_k),  cos(theta_k), 0;
+            %              0, 0, 1];
+            % invM = inv(M);                    % Compute M^{-1}
+            % delta_x = (xkp1 - xk);              % Δx = x_{k+1} - x_k
+            % % Wrap the orientation difference
+            % delta_x(3) = g2o.stuff.normalize_theta(delta_x(3));
+            % % Error = M^{-1} * Δx - z (z is control input u)
+            % obj.errorZ = (invM * delta_x - obj.z)/2;
+
             xk = obj.edgeVertices{1}.x;       % Current state x_k
             xkp1 = obj.edgeVertices{2}.x;     % Next state x_{k+1}
             theta_k = xk(3);                  % Extract θ_k
@@ -86,32 +105,35 @@ classdef PlatformPredictionEdge < g2o.core.BaseBinaryEdge
             M = obj.dT * [cos(theta_k), -sin(theta_k), 0;
                          sin(theta_k),  cos(theta_k), 0;
                          0, 0, 1];
-            invM = inv(M);                    % Compute M^{-1}
-            delta_x = xkp1 - xk;              % Δx = x_{k+1} - x_k
-            % Wrap the orientation difference
-            delta_x(3) = g2o.stuff.normalize_theta(delta_x(3));
-            % Error = M^{-1} * Δx - z (z is control input u)
-            obj.errorZ = invM * delta_x - obj.z;
+            error = inv(M) * (xkp1 - xk);
+
+            obj.errorZ = error;
+            obj.errorZ(3) = g2o.stuff.normalize_theta(obj.errorZ(3));
+
+            
         end
         
                 % Compute the Jacobians
          function linearizeOplus(obj)
             % Get the current state
-            xk = obj.edgeVertices{1}.x;
-            xk1 = obj.edgeVertices{2}.x;
-            theta = xk(3);
-            % Compute the rotation matrix M
-            M = obj.dT * [cos(theta) -sin(theta) 0;
-                          sin(theta) cos(theta) 0;
-                          0 0 1];
-            % The Jacobian with respect to xk
-            dtheta = xk1 - xk;
-            J1 = -(M' / obj.dT);
-            % The Jacobian with respect to xk1
-            J2 = M' / obj.dT;
-            % Store the Jacobians
-            obj.J{1} = J1;
-            obj.J{2} = J2;
+            % xk = obj.edgeVertices{1}.x;
+            % xk1 = obj.edgeVertices{2}.x;
+            % theta = xk(3);
+            % % Compute the rotation matrix M
+            % M = obj.dT * [cos(theta) -sin(theta) 0;
+            %               sin(theta) cos(theta) 0;
+            %               0 0 1];
+            % % The Jacobian with respect to xk
+            % dtheta = xk1 - xk;
+            % J1 = -(M' / obj.dT);
+            % % The Jacobian with respect to xk1
+            % J2 = M' / obj.dT;
+            % % Store the Jacobians
+            % obj.J{1} = J1;
+            % obj.J{2} = J2;
+            obj.J{1} = eye(3);
+
+            obj.J{2} = eye(3);
         end
 
     end    
