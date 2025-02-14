@@ -32,7 +32,7 @@ mainLoop.setAccumulateResultsUpdatePeriod(50);
 fig = FigureManager.getFigure("Q1b");
 clf
 hold on
-axis([-10 10 -10 10])
+axis([-50 50 -50 50])
 axis square
 
 % Set up the views which show the output of the simulator
@@ -46,7 +46,7 @@ simulatorViewer.addView(drivebot.SLAMSystemView(config, g2oSLAMSystem));
 
 % Register the viewer with the mainloop
 mainLoop.addViewer(simulatorViewer);
-mainLoop.setGraphicsUpdatePeriod(1);
+mainLoop.setGraphicsUpdatePeriod(50);
 
 % Run the main loop until it terminates
 mainLoop.run();
