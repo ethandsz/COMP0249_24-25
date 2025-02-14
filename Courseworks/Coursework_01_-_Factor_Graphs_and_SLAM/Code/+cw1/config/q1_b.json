@@ -2,7 +2,7 @@
     "platform": "config/trianglebot_platform.json",
     "platformTrajectory": "config/q1_b/waypoints.json",
   "maximumStepNumber": 2000,
-  "perturbWithNoise": false,
+  "perturbWithNoise": true,
   "x0": [
     0, 0, 0
   ],
