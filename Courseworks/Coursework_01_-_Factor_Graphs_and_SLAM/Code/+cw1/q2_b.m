@@ -33,7 +33,7 @@ mainLoop.addResultsAccumulator(resultsAccumulator);
 fig = FigureManager.getFigure("Q2b");
 clf
 hold on
-axis([-15 15 -15 15])
+axis([-25 25 -25 25])
 axis equal
 
 % Set up the views which show the output of the simulator

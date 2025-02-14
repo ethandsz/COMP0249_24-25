@@ -72,9 +72,10 @@ classdef PlatformPredictionEdge < g2o.core.BaseBinaryEdge
             M = [cos(theta) -sin(theta) 0; 
                 sin(theta) cos(theta) 0;
                 0 0 1];
+            x_k1 = x_k + (obj.dT* M) * (obj.z);
+            %x_k1 = x_k + ((M*obj.dT)) * obj.z;
             
-            x_k1 = x_k + M * (obj.z * obj.dT);
-            % Compute the posterior assming no noise
+
             x_k1(3) = x_k(3) + obj.z(3) * obj.dT;
             x_k1(3) = g2o.stuff.normalize_theta(x_k1(3));
             obj.edgeVertices{2}.setEstimate(x_k1);
@@ -148,6 +149,7 @@ classdef PlatformPredictionEdge < g2o.core.BaseBinaryEdge
         function computeError(obj)
             priorX = obj.edgeVertices{1}.estimate(); %Check this state! Why is it so different than edgeVertices{2}???
             currentX = obj.edgeVertices{2}.estimate();
+            
             c = cos(priorX(3));
             s = sin(priorX(3));
             Mi = [c s 0; -s c 0; 0 0 1];
@@ -155,6 +157,10 @@ classdef PlatformPredictionEdge < g2o.core.BaseBinaryEdge
             % Error = measurement (0) - predicted motion
             obj.errorZ = Mi * dx - (obj.z * obj.dT); % z is velocity scaled by dT
             obj.errorZ(3) = g2o.stuff.normalize_theta(obj.errorZ(3));
+            obj.setMeasurement(obj.z);
+
+          % obj.setMeasurement([obj.z(1); obj.z(2); g2o.stuff.normalize_theta(obj.z(3)) ]);
+
         end
         
         function linearizeOplus(obj)
@@ -172,6 +178,14 @@ classdef PlatformPredictionEdge < g2o.core.BaseBinaryEdge
             obj.J{1} = [-c, -s, -dx(1)*s + dx(2)*c;
                          s, -c, -dx(1)*c - dx(2)*s;
                          0,  0,               -1];
+            % fprintf("J1:\n");
+            % fprintf("%.2f %.2f %.2f\n", obj.J{1}');
+            % fprintf("J2:\n");
+            % 
+            % fprintf("%.2f %.2f %.2f\n", obj.J{2}');
+
         end
+
+        
     end    
 end
